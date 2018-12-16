@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.edu.pojo.FiveStars;
 import com.edu.pojo.Percentage;
 import com.edu.pojo.Ratings;
 import com.edu.pojo.StandardDeviation;
@@ -198,8 +199,35 @@ public class HomeController {
 
 				System.out.println("Error in reading file " + e);
 			}
+		}else if(type.equals("pigip")){
+			Configuration configuration = new Configuration();
+			configuration.set("fs.defaultFS", "hdfs://localhost:8020");
+			FileSystem fs;
+			try {
+				fs = FileSystem.get(configuration);
+				Path filePath = new Path("hdfs://localhost:8020/PigOutput/part-r-00000");
+				FSDataInputStream fsDataInputStream = fs.open(filePath);
+				BufferedReader reader = new BufferedReader(new InputStreamReader(fsDataInputStream));
+				String currentLine = null;
+				String[] inputArray;
+				ArrayList<FiveStars> data = new ArrayList<FiveStars>();
+				FiveStars s;
+				while ((currentLine = reader.readLine()) != null) {
+					inputArray = currentLine.split("\t");
+					try {
+						s = new FiveStars(inputArray[0],inputArray[1],inputArray[2],inputArray[3],inputArray[4],inputArray[5],inputArray[6],inputArray[7],inputArray[8]);
+						data.add(s);
+					} catch (Exception e) {
+						System.out.println("Error in Parsing double " + e);
+					}
+				}
+				return new ModelAndView("FiveStar", "topHundred", data);
+			} catch (IOException e) {
+
+				System.out.println("Error in reading file " + e);
+			}
 		}
-		return new ModelAndView("percentagenodata");
+		return new ModelAndView("FiveStar");
 	}
 
 	@RequestMapping(value = "/percentage", method = RequestMethod.POST)
